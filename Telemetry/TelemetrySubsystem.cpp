@@ -1,59 +1,25 @@
-#include "TelemetrySubsystem.h"
+#include "Telemetry/TelemetrySubsystem.h"
 
-#include "../Robots/RobotBase.h"
-
-void UTelemetrySubsystem::RegisterRobot(
-    ARobotBase* Robot
-)
+void UTelemetrySubsystem::UpdateTelemetry(const FRobotTelemetry& NewTelemetry)
 {
-    if (!Robot)
-    {
-        return;
-    }
-
-    if (!Robots.Contains(Robot))
-    {
-        Robots.Add(Robot);
-    }
+    CurrentTelemetry = NewTelemetry;
 }
 
-void UTelemetrySubsystem::UnregisterRobot(
-    ARobotBase* Robot
-)
+FRobotTelemetry UTelemetrySubsystem::GetTelemetry() const
 {
-    Robots.Remove(Robot);
+    return CurrentTelemetry;
 }
 
-FRobotTelemetry UTelemetrySubsystem::GetRobotTelemetry(
-    ARobotBase* Robot
-) const
+bool UTelemetrySubsystem::HasWarning() const
 {
-    if (!Robot)
-    {
-        return FRobotTelemetry();
-    }
-
-    return Robot->GetTelemetry();
+    return
+        CurrentTelemetry.Temperature >= 70.0f ||
+        CurrentTelemetry.Current >= 15.0f;
 }
 
-void UTelemetrySubsystem::Tick(
-    float DeltaTime
-)
+bool UTelemetrySubsystem::HasCriticalFault() const
 {
-    for (int32 Index = Robots.Num() - 1;
-         Index >= 0;
-         --Index)
-    {
-        ARobotBase* Robot = Robots[Index];
-
-        if (!IsValid(Robot))
-        {
-            Robots.RemoveAt(Index);
-            continue;
-        }
-
-        OnTelemetryUpdated.Broadcast(
-            Robot->GetTelemetry()
-        );
-    }
+    return
+        CurrentTelemetry.Temperature >= 90.0f ||
+        CurrentTelemetry.Current >= 20.0f;
 }
